@@ -2,14 +2,12 @@
 
 class Game:
 	
-	EMPTY = 0
-	BLUE = -1
-	RED = 1
-	player_dict = {'EMPTY': 0, 'BLUE': -1, 'RED': 1}
+
+	status = {'EMPTY': 0, 'BLUE': -1, 'RED': 1}
 
 	def __init__(self, size=7, current_player='BLUE'):
 		self.SIZE = size
-		self.board = [[self.EMPTY]*self.SIZE for i in range(0, self.SIZE)]
+		self.board = [[self.status['EMPTY']]*self.SIZE for i in range(0, self.SIZE)]
 		self.current_player = current_player
 
 
@@ -34,22 +32,27 @@ class Game:
 			self.current_player = 'BLUE'
 	
 	def update_board(self, move):
-		self.board[move[0]][move[1]] = self.player_dict[self.current_player]
+		''' move is a list that is col, row
+		'''
+		self.board[move[0]][move[1]] = self.status[self.current_player]
 		
 
 def pretty_print(game):
 	''' translates the logical game state into a string
 	returns a string
 	'''
-	# TODO, use game.SIZE to determine num columns
-	board_string = '0 1 2 3 4 5 6\n'
-	for i in range(0, game.SIZE):
-		for column in game.board:
-			if column[i] == game.EMPTY:
+	board_string = ''
+	for cols in range(0, game.SIZE):
+		board_string += str(cols) + ' '
+	board_string += '\n'
+	
+	for i in range(0, game.SIZE): # rows
+		for column in game.board: # columns
+			if column[i] == game.status['EMPTY']:
 				board_string+='_'
-			if column[i] == game.BLUE:
+			if column[i] == game.status['BLUE']:
 				board_string+='X'
-			if column[i] == game.RED:
+			if column[i] == game.status['RED']:
 				board_string+='O'
 			board_string+=' '
 		board_string+='\n'
@@ -63,24 +66,39 @@ def get_input(game):
 	while(True):
 		try:
 			column = int(raw_input("player " + game.current_player + "'s turn: "))
-			# TODO: fix the hard-coded 0-6
-			if column >= 0 and column <= 6:
-				row = 0
-				for index in range(0, game.SIZE):
-					row = index
-					if game.board[column][index] != game.EMPTY:
-						row = index - 1
-						#if column already full
-						if (index-1) < 0:
-							raise ValueError
-						else:
-							break
-				# done gathering info from this player
-				return [column, row]
-			else:
-				raise ValueError
+			try:
+				return check_move(game, column)
+			except ValueError as e:
+				print str(e)
 		except ValueError:
 			print 'give me a different value.'
+
+
+def check_move(game, column):
+	# if the move fits in the board
+	if column >= 0 and column < game.SIZE:
+		# we are looking for the correct row
+		row = 0
+		# loop down the column looking for last empty space
+		for index in range(0, game.SIZE):
+			row = index
+			# if we found an already-filled square
+			if game.board[column][index] != game.status['EMPTY']:
+				# set the row to the one before the full one
+				row = index - 1
+				#if column already full
+				if (index-1) < 0:
+					raise ValueError('This column is full.')
+				else:
+					# found a good move
+					return [column, row]	
+			#column was empty
+			
+		return [column, row]
+	# the given number didn't fit on the board at all
+	else:
+		raise ValueError('Number is off the board.')
+
 	
 
 
